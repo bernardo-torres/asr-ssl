@@ -1,0 +1,7 @@
+# data and test audio files
+data/
+*.wav
+
+# python stuff
+*/__pycache__
+*/.ipynb_checkpoints
