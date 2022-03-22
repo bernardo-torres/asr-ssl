@@ -11,7 +11,7 @@
 1. The data structure should look like (TO BE DEFINED):
 
    ```bash
-   /path/to/dataset/training
+   /data/
    ├── french
    |   ├── train
    |       ├── 1m
