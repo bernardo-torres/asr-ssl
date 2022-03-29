@@ -805,7 +805,7 @@ class CommonVoice(datasets.GeneratorBasedBuilder):
                     #print(field_values)
                     # if data is incomplete, fill with empty values
                     if len(field_values) < len(data_fields):
-                        field_values += (len(data_fields) - len(field_values)) * [0, 0, "a", "a", "a", "a", "a"]
+                        field_values += (len(data_fields) - len(field_values)) * [0]
 
                     result = {key: value for key, value in zip(data_fields, field_values)}
 
