@@ -11,7 +11,7 @@ import json
 from transformers import (Wav2Vec2CTCTokenizer, Wav2Vec2FeatureExtractor,
                           Wav2Vec2Processor)
 
-
+@dataclass
 class DataCollatorCTCWithPadding:
     """
     Data collator that will dynamically pad the inputs received.
