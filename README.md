@@ -8,52 +8,37 @@
 
 #### Dataset
 
-1. The data structure should look like (TO BE DEFINED):
+1. The data structure should look like:
 
    ```bash
    /data/
-   ├── french
-   |   ├── train
-   |       ├── 10m
-   |            ├── file.mp3
-   │            ...
-   |       ├── 1h
-   |            ├── file.mp3
-   │            ...
-   |       ├── 10h
-   |            ├── file.mp3
-   │            ...
-   |   ├── test
-   |       ├── file.mp3
-   │       ...
-   ├── english
-   |   ├── train
-   |       ├── 10m
-   |            ├── file.mp3
-   │            ...
-   |       ├── 1h
-   |            ├── file.mp3
-   │            ...
-   |       ├── 10h
-   |            ├── file.mp3
-   │            ...
-   |   ├── test
-   |       ├── file.mp3
-   │       ...
-   ├── japanese
-   |   ├── train
-   |       ├── 10m
-   |            ├── file.mp3
-   │            ...
-   |       ├── 1h
-   |            ├── file.mp3
-   │            ...
-   |       ├── 10h
-   |            ├── file.mp3
-   │            ...
-   |   ├── test
-   |       ├── file.mp3
-   │       ...
+   ├── fr
+   |   ├── 10m.tsv
+   |   ├── 1h.tsv
+   |   ├── 10h.tsv
+   |   ├── test.tsv
+   |   ├── clips
+   |     ├── file1.mp3
+   |     ├── file2.mp3
+   │     ...
+   ├── en
+   |   ├── 10m.tsv
+   |   ├── 1h.tsv
+   |   ├── 10h.tsv
+   |   ├── test.tsv
+   |   ├── clips
+   |     ├── file1.mp3
+   |     ├── file2.mp3
+   │     ...
+   ├── _language_
+   |   ├── 10m.tsv
+   |   ├── 1h.tsv
+   |   ├── 10h.tsv
+   |   ├── test.tsv
+   |   ├── clips
+   |     ├── file1.mp3
+   |     ├── file2.mp3
+   │     ...
    ...
        
    ```
