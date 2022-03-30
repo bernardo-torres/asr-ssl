@@ -107,31 +107,31 @@ def preprocess(dataset,
     else:
         vocab_ds = custom_vocab
 
-        
-    vocab_list = list(set(vocab_ds[0]))
-    vocab_dict = {v: k for k, v in enumerate(vocab_list)}
-
-    vocab_dict["|"] = vocab_dict[" "]
-    del vocab_dict[" "]
-    vocab_dict["[UNK]"] = len(vocab_dict)
-    vocab_dict["[PAD]"] = len(vocab_dict)
-
-    if verbose:
-        print(vocab_dict)
-
-
-    path = language + "_vocab.json"
-    with open(path, 'w') as vocab_file:
-        json.dump(vocab_dict, vocab_file)
-    #processor_factory(dataset, lm_path=lm_path)
-
     if tokenizer is None:
-        tokenizer = Wav2Vec2CTCTokenizer(
-            path,
-            unk_token="[UNK]",
-            pad_token="[PAD]",
-            word_delimiter_token="|",
-        )
+
+      vocab_list = list(set(vocab_ds['vocab'][0]))
+      vocab_dict = {v: k for k, v in enumerate(vocab_list)}
+      #print(list)
+      vocab_dict["|"] = vocab_dict[" "]
+      del vocab_dict[" "]
+      vocab_dict["[UNK]"] = len(vocab_dict)
+      vocab_dict["[PAD]"] = len(vocab_dict)
+
+      if verbose:
+          print(vocab_dict)
+
+
+      path = language + "_vocab.json"
+      with open(path, 'w') as vocab_file:
+          json.dump(vocab_dict, vocab_file)
+      #processor_factory(dataset, lm_path=lm_path)
+
+      tokenizer = Wav2Vec2CTCTokenizer(
+          path,
+          unk_token="[UNK]",
+          pad_token="[PAD]",
+          word_delimiter_token="|",
+      )
 
     if feature_extractor is None:
         feature_extractor = Wav2Vec2FeatureExtractor(
