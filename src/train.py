@@ -149,6 +149,15 @@ class DataTrainingArguments:
         default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�"],
         metadata={"help": "A list of characters to remove from the transcripts."},
     )
+    phoneme_language: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "The target language that should be used be"
+            " passed to the tokenizer for tokenization. Note that"
+            " this is only relevant if the model classifies the"
+            " input audio to a sequence of phoneme sequences."
+        },
+    )
 
 
 @dataclass
@@ -390,12 +399,14 @@ def main():
         eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
         print(f'Using {data_args.max_val_samples} test samples')
 
+    phoneme_language = data_args.phoneme_language
 
     train_dataset, processor, tokenizer, feature_extractor = preprocess(train_dataset, 
                                                                     data_args.dataset_config_name, 
                                                                     ds_name=data_args.train_split_name,
                                                                     filter_length=data_args.test_filter_length,
                                                                     custom_vocab=None,
+                                                                    phoneme_language=phoneme_language,
                                                                     #custom_vocab=vocab_fr, 
                                                                     verbose=True)
     print('Preprocessing train data done')
@@ -403,6 +414,7 @@ def main():
     eval_dataset, _, _, _ = preprocess(eval_dataset, 
                                         data_args.dataset_config_name, 
                                         custom_vocab=None, 
+                                        phoneme_language=phoneme_language,
                                         filter_length=data_args.train_filter_length,
                                         processor=processor, 
                                         tokenizer=tokenizer, 

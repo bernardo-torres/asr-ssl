@@ -87,7 +87,8 @@ def preprocess(dataset,
                 custom_vocab=None,
                 processor=None, 
                 tokenizer=None, 
-                feature_extractor=None, 
+                feature_extractor=None,
+                phoneme_language=None, 
                 chars_to_ignore_regex=None, 
                 verbose=True):
 
@@ -156,8 +157,12 @@ def preprocess(dataset,
         # batched output is "un-batched"
         batch["input_values"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_values[0]
         
+        additional_kwargs = {}
+        if phoneme_language is not None:
+            additional_kwargs["phonemizer_lang"] = phoneme_language
+            
         with processor.as_target_processor():
-            batch["labels"] = processor(batch["sentence"]).input_ids
+            batch["labels"] = processor(batch["sentence"], **additional_kwargs).input_ids
         return batch
 
     dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=1)
