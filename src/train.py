@@ -112,13 +112,13 @@ class DataTrainingArguments:
             "help": "The name of the training data set split to use (via the datasets library). Defaults to '1h'"
         },
     )
-    train_filter_length: Optional[str] = field(
+    train_filter_length: Optional[float] = field(
         default=None,
         metadata={
             "help": "Number of seconds to limit training samples. Defaults to 'None'"
         },
     )
-    test_filter_length: Optional[str] = field(
+    test_filter_length: Optional[float] = field(
         default="1h",
         metadata={
             "help": "Number of seconds to limit test samples. Defaults to 'None'"

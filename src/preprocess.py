@@ -88,7 +88,7 @@ def preprocess(dataset,
                 tokenizer=None, 
                 feature_extractor=None, 
                 chars_to_ignore_regex=None, 
-                verbose=False):
+                verbose=True):
 
     if chars_to_ignore_regex is None:
         chars_to_ignore_regex = '[\,\?\.\!\-\;\:\"\“\%\‘\”\�\ʿ\+\)\(]'
@@ -164,5 +164,6 @@ def preprocess(dataset,
     if filter_length is not None:
         max_input_length_in_sec = filter_length
         dataset = dataset.filter(lambda x: len(x) < max_input_length_in_sec * processor.feature_extractor.sampling_rate, input_columns=["input_values"])
-
+        if verbose:
+            print(f"Limited dataset to {max_input_length_in_sec} seconds max")
     return dataset, processor, tokenizer, feature_extractor
