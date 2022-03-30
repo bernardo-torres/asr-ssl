@@ -13,7 +13,6 @@ import torch
 import torchaudio
 from packaging import version
 from torch import nn
-from model import model_factory
 
 import transformers
 from transformers import (
