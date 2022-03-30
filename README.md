@@ -12,7 +12,7 @@
 
    ```bash
    /data/
-   ├── fr
+   ├── fr.zip
    |   ├── 10m.tsv
    |   ├── 1h.tsv
    |   ├── 10h.tsv
@@ -21,7 +21,7 @@
    |     ├── file1.mp3
    |     ├── file2.mp3
    │     ...
-   ├── en
+   ├── en.zip
    |   ├── 10m.tsv
    |   ├── 1h.tsv
    |   ├── 10h.tsv
@@ -30,7 +30,7 @@
    |     ├── file1.mp3
    |     ├── file2.mp3
    │     ...
-   ├── _language_
+   ├── _language_.zip
    |   ├── 10m.tsv
    |   ├── 1h.tsv
    |   ├── 10h.tsv
