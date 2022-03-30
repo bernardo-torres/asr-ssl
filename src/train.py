@@ -13,6 +13,7 @@ import torch
 import torchaudio
 from packaging import version
 from torch import nn
+from model import model_factory
 
 import transformers
 from transformers import (
@@ -393,11 +394,13 @@ def main():
 
     train_dataset, processor, tokenizer, feature_extractor = preprocess(train_dataset, 
                                                                     data_args.dataset_config_name, 
+                                                                    ds_name=data_args.train_split_name,
                                                                     filter_length=data_args.test_filter_length,
                                                                     custom_vocab=None,
                                                                     #custom_vocab=vocab_fr, 
                                                                     verbose=True)
     print('Preprocessing train data done')
+    print('------------------------------')
     eval_dataset, _, _, _ = preprocess(eval_dataset, 
                                         data_args.dataset_config_name, 
                                         custom_vocab=None, 
@@ -409,6 +412,10 @@ def main():
     print('Preprocessing test data done')
 
     print('------------------------------')
+
+
+   # model = model_factory()
+
     model = Wav2Vec2ForCTC.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
@@ -497,6 +504,8 @@ def main():
         print('Freezed feature extractor')
     else:
         print('Did not freeze feature extractor')
+    
+    # model.gradient_checkpointing_enable()
     # Data collator
     data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
 
@@ -510,24 +519,6 @@ def main():
         eval_dataset=eval_dataset if training_args.do_eval else None,
         tokenizer=processor.feature_extractor,
     )"""
-
-    training_args2 = TrainingArguments(
-    # output_dir="/content/gdrive/MyDrive/wav2vec2-large-xlsr-turkish-demo",
-    output_dir="./wav2vec2-large-xlsr-turkish-demo",
-    group_by_length=True,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=2,
-    gradient_accumulation_steps=2,
-    evaluation_strategy="steps",
-    num_train_epochs=10,
-    fp16=True,
-    save_steps=100,
-    eval_steps=100,
-    logging_steps=100,
-    learning_rate=2e-4,
-    warmup_steps=500,
-    save_total_limit=2,
-    )
 
     trainer = Trainer(
     model=model,

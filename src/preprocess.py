@@ -82,6 +82,7 @@ def extract_all_chars(batch):
 
 def preprocess(dataset, 
                 language,
+                ds_name='',
                 filter_length= None,
                 custom_vocab=None,
                 processor=None, 
@@ -122,7 +123,7 @@ def preprocess(dataset,
           print(vocab_dict)
 
 
-      path = language + "_vocab.json"
+      path = language +'_' + ds_name + "_vocab.json"
       with open(path, 'w') as vocab_file:
           json.dump(vocab_dict, vocab_file)
       #processor_factory(dataset, lm_path=lm_path)
