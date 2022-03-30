@@ -382,6 +382,15 @@ def main():
     )
     processor = Wav2Vec2Processor(feature_extractor=feature_extractor, tokenizer=tokenizer)"""
 
+    if data_args.max_train_samples is not None:
+        train_dataset = train_dataset.select(range(data_args.max_train_samples))
+        print(f'Using {data_args.max_train_samples} train samples')
+
+    if data_args.max_val_samples is not None:
+        eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
+        print(f'Using {data_args.max_val_samples} test samples')
+
+
     train_dataset, processor, tokenizer, feature_extractor = preprocess(train_dataset, 
                                                                     data_args.dataset_config_name, 
                                                                     filter_length=data_args.test_filter_length,
@@ -417,14 +426,7 @@ def main():
 
     print('Loaded model '+ model_args.model_name_or_path)
 
-    if data_args.max_train_samples is not None:
-        train_dataset = train_dataset.select(range(data_args.max_train_samples))
-        print(f'Using {data_args.max_train_samples} train samples')
-
-    if data_args.max_val_samples is not None:
-        eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
-        print(f'Using {data_args.max_val_samples} test samples')
-
+  
     resampler = torchaudio.transforms.Resample(48_000, 16_000)
 
     # Preprocessing the datasets.
