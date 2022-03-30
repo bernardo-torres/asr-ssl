@@ -82,6 +82,7 @@ def extract_all_chars(batch):
 
 def preprocess(dataset, 
                 language,
+                filter_length= None,
                 custom_vocab=None,
                 processor=None, 
                 tokenizer=None, 
@@ -160,5 +161,8 @@ def preprocess(dataset,
 
     dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=1)
 
+    if filter_length is not None:
+        max_input_length_in_sec = filter_length
+        dataset = dataset.filter(lambda x: len(x) < max_input_length_in_sec * processor.feature_extractor.sampling_rate, input_columns=["input_values"])
 
     return dataset, processor, tokenizer, feature_extractor
