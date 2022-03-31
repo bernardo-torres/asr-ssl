@@ -124,8 +124,12 @@ class DataTrainingArguments:
             "help": "Number of seconds to limit test samples. Defaults to 'None'"
         },
     )
-    overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached preprocessed datasets or not."}
+    download_mode: str = field(
+        default='reuse_cache_if_exists', 
+        metadata={"help": "reuse_cache_if_exists (default), force_redownload, reuse_dataset_if_exists."}
+    )
+    overwrite_cache: Optional[str] = field(
+        default='False', metadata={"help": "Overwrite the cached preprocessed datasets or not."}
     )
     preprocessing_num_workers: Optional[int] = field(
         default=None,
@@ -322,11 +326,13 @@ def main():
     set_seed(training_args.seed)
 
     # Get the datasets:
+
     train_dataset = datasets.load_dataset(
-        data_args.script_dir, data_args.dataset_config_name, split=data_args.train_split_name, data_dir=data_args.data_dir, cache_dir=model_args.cache_dir
+        data_args.script_dir, data_args.dataset_config_name, split=data_args.train_split_name, data_dir=data_args.data_dir, cache_dir=model_args.cache_dir, download_mode=data_args.download_mode
     )
     eval_dataset = datasets.load_dataset(
-        data_args.script_dir, data_args.dataset_config_name, split="test", data_dir=data_args.data_dir, cache_dir=model_args.cache_dir)
+        data_args.script_dir, data_args.dataset_config_name, split="test", data_dir=data_args.data_dir, cache_dir=model_args.cache_dir, download_mode=data_args.download_mode
+    )
 
     print('------------------------------')
 
