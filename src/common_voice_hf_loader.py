@@ -108,6 +108,15 @@ _LANGUAGES = {
         "Overall_Hr_Total": 16,
         "Number_Of_Voice": 157,
     },
+    "ba": {
+        "Language": "ba",
+        "Date": "2020-12-11",
+        "Size": "444 MB",
+        "Version": "br_16h_2020-12-11",
+        "Validated_Hr_Total": 7,
+        "Overall_Hr_Total": 16,
+        "Number_Of_Voice": 157,
+    },
     "ca": {
         "Language": "Catalan",
         "Date": "2020-12-11",
