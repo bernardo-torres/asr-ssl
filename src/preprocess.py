@@ -135,7 +135,7 @@ def preprocess(dataset,
                                 )
         else:
             vocab_ds = dataset.map(extract_all_chars_phoneme, 
-                                    batched=True, batch_size=-1, 
+                                    batched=True, batch_size=100, 
                                     keep_in_memory=True, 
                                     remove_columns=dataset.column_names, 
                                     )
