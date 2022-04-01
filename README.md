@@ -42,3 +42,9 @@
    ...
        
    ```
+   
+   #### TODO
+   - Add support for APR
+   - Add support for choosing the model
+   - Change training step function and add support for logging loss curves
+   - 
