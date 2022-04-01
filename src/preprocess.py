@@ -1,15 +1,15 @@
-from datasets import ClassLabel
 import torch
 import re
 from datasets import Audio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
-import random
-import pandas as pd
-from IPython.display import display, HTML
 import json
 from transformers import (Wav2Vec2CTCTokenizer, Wav2Vec2FeatureExtractor,
-                          Wav2Vec2Processor)
+                          Wav2Vec2Processor, Wav2Vec2PhonemeCTCTokenizer)
+
+from phonemizer import phonemize
+from phonemizer.separator import Separator
+
 
 @dataclass
 class DataCollatorCTCWithPadding:
@@ -78,8 +78,6 @@ def extract_all_chars(batch):
   vocab = list(set(all_text))
   return {"vocab": [vocab], "all_text": [all_text]}
 
-
-
 def preprocess(dataset, 
                 language,
                 ds_name='',
@@ -89,7 +87,9 @@ def preprocess(dataset,
                 tokenizer=None, 
                 feature_extractor=None,
                 phoneme_language=None, 
-                chars_to_ignore_regex=None, 
+                phoneme_backend='espeak',
+                chars_to_ignore_regex=None,
+                load_from_cache=True, 
                 verbose=True):
 
     if chars_to_ignore_regex is None:
@@ -100,41 +100,83 @@ def preprocess(dataset,
         batch["sentence"] = re.sub(chars_to_ignore_regex, '', batch["sentence"]).lower() + " "
         return batch
 
+    #phoneme_language = 'en-us'
+    #phoneme_backend = 'espeak'
+
+    def phone(text):
+        return phonemize(
+            text,
+            language=phoneme_language,
+            backend=phoneme_backend,
+            separator=Separator(phone=' ', word=' | ', syllable=''),
+            strip=True,
+            preserve_punctuation=True,
+            njobs=4) 
+
+    def extract_all_chars_phoneme(batch):
+        all_text = " ".join(phone(batch["sentence"]))
+        all_char = all_text.split(" ")
+        vocab = list(set(all_char))
+        return {"vocab": [vocab], "all_text": [all_text]}
+
+    dataset = dataset.remove_columns(["accent", "age", "client_id", "down_votes", "gender", "locale", "segment", "up_votes"])
+
     # Remove special characters
     dataset = dataset.map(remove_special_characters)
 
     dataset = dataset.cast_column("audio", Audio(sampling_rate=16_000))
 
     if custom_vocab is None:
-        vocab_ds = dataset.map(extract_all_chars, batched=True, batch_size=-1, keep_in_memory=True, remove_columns=dataset.column_names)
+        if phoneme_language is None:
+             vocab_ds = dataset.map(extract_all_chars, 
+                                batched=True, batch_size=-1, 
+                                keep_in_memory=True, 
+                                remove_columns=dataset.column_names, 
+                                )
+        else:
+            vocab_ds = dataset.map(extract_all_chars_phoneme, 
+                                    batched=True, batch_size=-1, 
+                                    keep_in_memory=True, 
+                                    remove_columns=dataset.column_names, 
+                                    )
     else:
         vocab_ds = custom_vocab
 
     if tokenizer is None:
 
-      vocab_list = list(set(vocab_ds['vocab'][0]))
-      vocab_dict = {v: k for k, v in enumerate(vocab_list)}
-      #print(list)
-      vocab_dict["|"] = vocab_dict[" "]
-      del vocab_dict[" "]
-      vocab_dict["[UNK]"] = len(vocab_dict)
-      vocab_dict["[PAD]"] = len(vocab_dict)
+        vocab_list = list(set(vocab_ds['vocab'][0]))
+        vocab_dict = {v: k for k, v in enumerate(vocab_list)}
+        print(vocab_dict)
+        if phoneme_language is None:
+            vocab_dict["|"] = vocab_dict[" "]
+            del vocab_dict[" "]
+        vocab_dict["[UNK]"] = len(vocab_dict)
+        vocab_dict["[PAD]"] = len(vocab_dict)
 
-      if verbose:
-          print(vocab_dict)
+        if verbose:
+            print(vocab_dict)
 
 
-      path = language +'_' + ds_name + "_vocab.json"
-      with open(path, 'w') as vocab_file:
-          json.dump(vocab_dict, vocab_file)
-      #processor_factory(dataset, lm_path=lm_path)
+        path = language +'_' + ds_name + "_vocab.json"
+        with open(path, 'w') as vocab_file:
+            json.dump(vocab_dict, vocab_file)
+        #processor_factory(dataset, lm_path=lm_path)
 
-      tokenizer = Wav2Vec2CTCTokenizer(
-          path,
-          unk_token="[UNK]",
-          pad_token="[PAD]",
-          word_delimiter_token="|",
-      )
+        if phoneme_language is None:  
+            tokenizer = Wav2Vec2CTCTokenizer(
+                path,
+                unk_token="[UNK]",
+                pad_token="[PAD]",
+                word_delimiter_token="|",
+            )
+        else:
+            tokenizer = Wav2Vec2PhonemeCTCTokenizer(
+                path, 
+                unk_token="[UNK]", 
+                pad_token="[PAD]", 
+                word_delimiter_token="|", 
+                language=phoneme_language, 
+                do_phonemize=False)
 
     if feature_extractor is None:
         feature_extractor = Wav2Vec2FeatureExtractor(
@@ -157,15 +199,32 @@ def preprocess(dataset,
         # batched output is "un-batched"
         batch["input_values"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_values[0]
         
-        additional_kwargs = {}
-        if phoneme_language is not None:
-            additional_kwargs["phonemizer_lang"] = phoneme_language
+        #additional_kwargs = {}
+        #if phoneme_language is not None:
+        #    additional_kwargs["phonemizer_lang"] = phoneme_language
             
         with processor.as_target_processor():
-            batch["labels"] = processor(batch["sentence"], **additional_kwargs).input_ids
+            batch["labels"] = processor(batch["sentence"]).input_ids
         return batch
 
-    dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=1)
+    def prepare_input_values(batch):
+        audio = batch["audio"]
+        # batched output is "un-batched"
+        batch["input_values"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_values[0]
+        return batch
+
+    def prepare_phonetize(batch):
+        with processor.as_target_processor():
+            print(batch['sentence'])
+            batch["labels"] = processor(phone(batch["sentence"])).input_ids
+        return batch
+
+    if phoneme_language is None:
+        dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=1)
+    else:
+        dataset = dataset.map(prepare_input_values, remove_columns=dataset.column_names[:-1], num_proc=1)
+        dataset = dataset.map(prepare_phonetize, remove_columns=dataset.column_names[:-1], num_proc=1, batched=True, batch_size = 100)
+
 
     if filter_length is not None:
         max_input_length_in_sec = filter_length
