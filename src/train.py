@@ -61,6 +61,9 @@ class ModelArguments:
     freeze_feature_extractor: Optional[bool] = field(
         default=True, metadata={"help": "Whether to freeze the feature extractor layers of the model."}
     )
+    freeze_base_model: Optional[bool] = field(
+        default=False, metadata={"help": "Whether to freeze all of the base model except the classification head."}
+    )
     attention_dropout: Optional[float] = field(
         default=0.1, metadata={"help": "The dropout ratio for the attention probabilities."}
     )
@@ -521,7 +524,15 @@ def main():
         print('Freezed feature extractor')
     else:
         print('Did not freeze feature extractor')
-    
+
+    if model_args.freeze_base_model:
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.lm_head.parameters():
+            param.requires_grad = True
+        print('Only training classification head')
+    else:
+        print('Fine tuning model')
     # model.gradient_checkpointing_enable()
     # Data collator
     data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
