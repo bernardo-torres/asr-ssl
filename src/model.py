@@ -1,5 +1,6 @@
 
 from transformers import Wav2Vec2ForCTC, HubertForCTC, WavLMForCTC
+from torch import nn
 
 def model_factory(model_id,
                  cache_dir,
@@ -13,6 +14,7 @@ def model_factory(model_id,
                  ctc_loss_reduction,
                  pad_token_id,
                  vocab_size,
+                 hidden_size=768,
                   model_type='wav2vec',
                   final_layer=None,
                   freeze_encoder=False):
@@ -60,8 +62,11 @@ def model_factory(model_id,
                     gradient_checkpointing=gradient_checkpointing,
                     layerdrop=layerdrop,
                     ctc_loss_reduction=ctc_loss_reduction,
-                    pad_token_id=pad_token_id,
-                    vocab_size=vocab_size)
+                    pad_token_id=pad_token_id)
+
+        model.config.vocab_size = vocab_size
+        model.lm_head = nn.Linear(hidden_size, vocab_size)
+        model.post_init() 
         
     elif model_type == 'wavlm':
         if model_id == None:
@@ -76,9 +81,11 @@ def model_factory(model_id,
                     mask_time_prob=mask_time_prob,
                     layerdrop=layerdrop,
                     ctc_loss_reduction=ctc_loss_reduction,
-                    pad_token_id=pad_token_id,
-                    vocab_size=vocab_size)
-                    
+                    pad_token_id=pad_token_id)
+        
+        model.config.vocab_size = vocab_size
+        model.lm_head = nn.Linear(hidden_size, vocab_size)
+        model.post_init()            
     
     if final_layer is not None:
         # For CTC loss the final layer default is nn.Linear(output_hidden_size, config.vocab_size)
