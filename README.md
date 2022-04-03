@@ -46,7 +46,8 @@
    
 
 Finetuning wav2vec on Automatic Phoneme Recognition (APR) on 1h data partition of hungarian dataset using espeak backend to convert to hungarian phonemes. 
-```python train.py \
+``` 
+python train.py \
     --model_name_or_path="facebook/wav2vec2-base" \
     --model_type="wav2vec" \
     --data_dir="path/data" \
@@ -82,7 +83,8 @@ Finetuning wav2vec on Automatic Phoneme Recognition (APR) on 1h data partition o
    ```
    
    Finetuning WavLM on Automatic Speech Recognition (ASR) on 10m data partition of english (no phoneme transcription). 
-```python train.py \
+```
+python train.py \
     --model_name_or_path="patrickvonplaten/wavlm-libri-clean-100h-base-plus" \
     --model_type="wavlm" \
     --data_dir="path/data" \
