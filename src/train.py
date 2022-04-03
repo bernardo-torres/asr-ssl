@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-import json
 import logging
 import os
-import re
 import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
 import datasets
+from nbformat import write
 import numpy as np
 import torch
 import torchaudio
+from torch.utils.tensorboard import SummaryWriter
 from packaging import version
 from torch import nn
 
@@ -112,6 +112,9 @@ class DataTrainingArguments:
     data_dir: Optional[str] = field(
         default="/content/drive/MyDrive/asr_data/data", metadata={"help": "Common voice data dir (local)"}
     )
+    log_dir: Optional[str] = field(
+        default="./runs/", metadata={"help": "Tensorboard log dir"}
+    )
     dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library). Equivalent to language"}
     )
@@ -169,6 +172,8 @@ class DataTrainingArguments:
             " passed to the tokenizer for tokenization. Note that"
             " this is only relevant if the model classifies the"
             " input audio to a sequence of phoneme sequences."
+            "https://github.com/espeak-ng/espeak-ng/blob/master/docs/languages.md"
+
         },
     )
 
@@ -282,6 +287,7 @@ class CTCTrainer(Trainer):
         else:
             loss.backward()
 
+        writer.writer.add_scalar("Loss/train", loss, epoch)
         return loss.detach()
 
 
@@ -333,6 +339,9 @@ def main():
 
     # Set seed before initializing model.
     set_seed(training_args.seed)
+
+    writer = SummaryWriter(training_args.log_dir)  # tensorboard
+
 
     # Get the datasets:
 
@@ -535,7 +544,10 @@ def main():
 
         wer = wer_metric.compute(predictions=pred_str, references=label_str)
 
-        return {"wer": wer}
+        if phoneme_language is None:    
+            return {"wer": wer}
+        else:
+            return {"per": wer}
 
     if model_args.freeze_feature_extractor:
         model.freeze_feature_extractor()
