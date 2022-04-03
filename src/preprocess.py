@@ -215,7 +215,7 @@ def preprocess(dataset,
 
     def prepare_phonetize(batch):
         with processor.as_target_processor():
-            print(batch['sentence'])
+            print(batch['sentence'][0])
             batch["labels"] = processor(phone(batch["sentence"])).input_ids
         return batch
 
