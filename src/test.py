@@ -96,8 +96,8 @@ def main():
     path = model_args.model_name_or_path#'/content/drive/MyDrive/asr_results/wav2vec2-hu10h' #model argument
     language = model_args.language#'hu' # model argument
     phoneme_language = model_args.phoneme_language
-    processor = Wav2Vec2Processor.load(path)
-    model =  Wav2Vec2ForCTC.load(path).to(device)
+    processor = Wav2Vec2Processor.from_pretrained(path)
+    model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
 
     def map_to_result(batch):
       with torch.no_grad():
@@ -160,7 +160,7 @@ def main():
         print(f"Computing test results for {data_args.num_test_elements} elements")
 
     print("\n\n======== Test Results==========\n")
-
+    
     print("Test WER: {:.3f}".format(wer_metric.compute(predictions=results["pred_str"], references=results["text"])))
 
     print("\nExemples of predictions\n")
