@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 import json
 from transformers import (Wav2Vec2CTCTokenizer, Wav2Vec2FeatureExtractor,
                           Wav2Vec2Processor, Wav2Vec2PhonemeCTCTokenizer)
+from librosa import effects
 
 from phonemizer import phonemize
 from phonemizer.separator import Separator
@@ -82,6 +83,7 @@ def preprocess(dataset,
                 language,
                 ds_name='',
                 filter_length= None,
+                trim=False,
                 custom_vocab=None,
                 processor=None, 
                 tokenizer=None, 
@@ -194,10 +196,13 @@ def preprocess(dataset,
             )
 
     def prepare_dataset(batch):
-        audio = batch["audio"]
+        wav = batch["audio"]["array"]
+        sr = batch["audio"]["sampling_rate"]
+        if trim:
+            wav = effects.trim(wav, top_db=30)
 
         # batched output is "un-batched"
-        batch["input_values"] = processor(audio["array"], sampling_rate=audio["sampling_rate"]).input_values[0]
+        batch["input_values"] = processor(wav, sampling_rate=sr).input_values[0]
         
         #additional_kwargs = {}
         #if phoneme_language is not None:
@@ -228,7 +233,13 @@ def preprocess(dataset,
 
     if filter_length is not None:
         max_input_length_in_sec = filter_length
+        len_pre = len(dataset)
         dataset = dataset.filter(lambda x: len(x) < max_input_length_in_sec * processor.feature_extractor.sampling_rate, input_columns=["input_values"])
+        len_post = len(dataset)
         if verbose:
             print(f"Limited dataset to {max_input_length_in_sec} seconds max")
+            print("Removed {} clips ({}%)".format(
+                len_pre - len_post,
+                round((len_pre-len_post)/len_pre*100, 2),
+            ))
     return dataset, processor, tokenizer, feature_extractor

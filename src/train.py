@@ -9,7 +9,6 @@ import datasets
 from nbformat import write
 import numpy as np
 import torch
-import torchaudio
 from torch.utils.tensorboard import SummaryWriter
 from packaging import version
 from torch import nn
@@ -172,6 +171,18 @@ class DataTrainingArguments:
             "https://github.com/espeak-ng/espeak-ng/blob/master/docs/languages.md"
 
         },
+    )
+    trim_train_clips: Optional[str] = field(
+        default=False,
+        metadata={
+            "help": "Controls if the silent parts of train clips should be trimmed or not."
+        }
+    )
+    trim_test_clips: Optional[str] = field(
+        default=False,
+        metadata={
+            "help": "Controls if the silent parts of test clips should be trimmed or not."
+        }
     )
 
 
@@ -426,6 +437,7 @@ def main():
                                                                     data_args.dataset_config_name, 
                                                                     ds_name=data_args.train_split_name,
                                                                     filter_length=data_args.train_filter_length,
+                                                                    trim=data_args.trim_train_clips,
                                                                     custom_vocab=None,
                                                                     phoneme_language=phoneme_language,
                                                                     #custom_vocab=vocab_fr, 
@@ -437,6 +449,7 @@ def main():
                                         custom_vocab=None, 
                                         phoneme_language=phoneme_language,
                                         filter_length=data_args.test_filter_length,
+                                        trim=data_args.trim_test_clips,
                                         processor=processor, 
                                         tokenizer=tokenizer, 
                                         feature_extractor=feature_extractor,
@@ -476,9 +489,6 @@ def main():
     )"""
 
     print('Loaded model '+ model_args.model_name_or_path)
-
-  
-    resampler = torchaudio.transforms.Resample(48_000, 16_000)
 
     # Preprocessing the datasets.
     # We need to read the aduio files as arrays and tokenize the targets.
