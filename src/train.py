@@ -112,9 +112,6 @@ class DataTrainingArguments:
     data_dir: Optional[str] = field(
         default="/content/drive/MyDrive/asr_data/data", metadata={"help": "Common voice data dir (local)"}
     )
-    log_dir: Optional[str] = field(
-        default="./runs/", metadata={"help": "Tensorboard log dir"}
-    )
     dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library). Equivalent to language"}
     )
@@ -340,7 +337,7 @@ def main():
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
-    writer = SummaryWriter(training_args.log_dir)  # tensorboard
+    #writer = SummaryWriter(training_args.log_dir)  # tensorboard
 
 
     # Get the datasets:
