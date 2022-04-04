@@ -14,10 +14,9 @@ def model_factory(model_id,
                  ctc_loss_reduction,
                  pad_token_id,
                  vocab_size,
-                 hidden_size=768,
-                  model_type='wav2vec',
-                  final_layer=None,
-                  freeze_encoder=False):
+                 model_type='wav2vec',
+                 final_layer=None,
+                 freeze_encoder=False):
 
     """
     processor: wav2vec processor with vocab configurations
@@ -65,6 +64,7 @@ def model_factory(model_id,
                     pad_token_id=pad_token_id)
 
         model.config.vocab_size = vocab_size
+        hidden_size = model.lm_head.in_features
         model.lm_head = nn.Linear(hidden_size, vocab_size)
         model.post_init() 
         
@@ -84,6 +84,7 @@ def model_factory(model_id,
                     pad_token_id=pad_token_id)
         
         model.config.vocab_size = vocab_size
+        hidden_size = model.lm_head.in_features
         model.lm_head = nn.Linear(hidden_size, vocab_size)
         model.post_init()            
     
