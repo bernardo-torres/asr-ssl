@@ -169,6 +169,8 @@ def preprocess(dataset,
                 path,
                 unk_token="[UNK]",
                 pad_token="[PAD]",
+                bos_token=None,
+                eos_token=None,
                 word_delimiter_token="|",
             )
         else:
@@ -176,6 +178,8 @@ def preprocess(dataset,
                 path, 
                 unk_token="[UNK]", 
                 pad_token="[PAD]", 
+                bos_token=None,
+                eos_token=None,
                 word_delimiter_token="|", 
                 language=phoneme_language, 
                 do_phonemize=False)

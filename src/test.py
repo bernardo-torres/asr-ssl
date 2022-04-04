@@ -108,15 +108,14 @@ def main():
     path = model_args.model_name_or_path#'/content/drive/MyDrive/asr_results/wav2vec2-hu10h' #model argument
     language = model_args.language#'hu' # model argument
     phoneme_language = model_args.phoneme_language
-    processor = Wav2Vec2Processor.from_pretrained(path)
+    processor = Wav2Vec2Processor.from_pretrained(path, bos_token=None, eos_token=None)
     model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
     model.eval()
     model.to(device)
 
     use_lm = model_args.phoneme_language is None and model_args.lm_path is not None
     if use_lm:
-        num_special_tokens = len(processor.tokenizer.additional_special_tokens)
-        vocab_list = [x[0] for x in sorted(processor.tokenizer.get_vocab().items(), key=lambda x: x[1])][:-num_special_tokens]
+        vocab_list = [x[0] for x in sorted(processor.tokenizer.get_vocab().items(), key=lambda x: x[1])]
         decoder = build_ctcdecoder(
             labels=vocab_list,
             kenlm_model_path=model_args.lm_path,
