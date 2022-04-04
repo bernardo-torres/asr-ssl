@@ -110,10 +110,13 @@ def main():
     phoneme_language = model_args.phoneme_language
     processor = Wav2Vec2Processor.from_pretrained(path)
     model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
+    model.eval()
+    model.to(device)
 
     use_lm = model_args.phoneme_language is None and model_args.lm_path is not None
     if use_lm:
-        vocab_list = [x[0] for x in sorted(processor.tokenizer.get_vocab().items(), key=lambda x: x[1])]
+        num_special_tokens = len(processor.tokenizer.additional_special_tokens)
+        vocab_list = [x[0] for x in sorted(processor.tokenizer.get_vocab().items(), key=lambda x: x[1])][:-num_special_tokens]
         decoder = build_ctcdecoder(
             labels=vocab_list,
             kenlm_model_path=model_args.lm_path,
@@ -136,7 +139,6 @@ def main():
         for k in batch:
             batch[k] = batch[k].to(device)
 
-        model.eval()
         with torch.no_grad():
             logits = model(batch['input_values'], attention_mask=batch['attention_mask']).logits
 
