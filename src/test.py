@@ -1,10 +1,11 @@
 import torch
-from transformers import Wav2Vec2ForCTC
+from transformers import Wav2Vec2ForCTC, Wav2Vec2ProcessorWithLM
 import numpy as np
 from datasets import load_dataset, load_metric
 import random
 import pandas as pd
 from IPython.display import display, HTML
+from pyctcdecode import build_ctcdecoder
 
 #!/usr/bin/env python3
 import os
@@ -57,10 +58,21 @@ class ModelArguments:
         default="/content/downloads",
         metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
     )
-    
     device: str = field(
         default="cuda",
         metadata={"help": "device for tensors/model"}
+    )
+    lm_path: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Path to KenLM language model."
+        },
+    )
+    batch_size: Optional[int] = field(
+        default=8,
+        metadata={
+            "help": "Eval batch size."
+        },
     )
 
     
@@ -99,16 +111,44 @@ def main():
     processor = Wav2Vec2Processor.from_pretrained(path)
     model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
 
-    def map_to_result(batch):
-      with torch.no_grad():
-        input_values = torch.tensor(batch["input_values"], device=device).unsqueeze(0)
-        logits = model(input_values).logits
+    use_lm = model_args.phoneme_language is None and model_args.lm_path is not None
+    if use_lm:
+        vocab_list = [x[0] for x in sorted(processor.tokenizer.get_vocab().items(), key=lambda x: x[1])]
+        decoder = build_ctcdecoder(
+            labels=vocab_list,
+            kenlm_model_path=model_args.lm_path,
+        )
+        processor = Wav2Vec2ProcessorWithLM(
+            feature_extractor=processor.feature_extractor,
+            tokenizer=processor.tokenizer,
+            decoder=decoder,
+        )
 
-      pred_ids = torch.argmax(logits, dim=-1)
-      batch["pred_str"] = processor.batch_decode(pred_ids)[0]
-      batch["text"] = processor.decode(batch["labels"], group_tokens=False)
-      #batch["text"] = phonemize(batch["text"])
-      return batch
+
+    def map_to_result(batch):
+        features = batch['input_values']
+        features = [{'input_values': feature} for feature in features]
+        labels = batch['labels']
+        batch = processor.pad(
+            features,
+            return_tensors="pt",
+        )
+        for k in batch:
+            batch[k] = batch[k].to(device)
+
+        model.eval()
+        with torch.no_grad():
+            logits = model(batch['input_values'], attention_mask=batch['attention_mask']).logits
+
+        result = {}
+        result["text"] = processor.tokenizer.batch_decode(labels, group_tokens=False)
+        if use_lm:
+            result["pred_str"] = processor.batch_decode(logits.cpu().numpy()).text
+        else:
+            pred_ids = torch.argmax(logits, dim=-1)
+            result["pred_str"] = processor.batch_decode(pred_ids)
+
+        return result
 
     wer_metric = load_metric("wer")
 
@@ -152,12 +192,12 @@ def main():
     print('Processing test data done')
     
     
-    if data_args.num_test_elements is None:
-        results = dataset_test.map(map_to_result, remove_columns=dataset_test.column_names)
-        print(f"Computing test results for full test data")
-    else:
-        results = dataset_test.select(list(range(data_args.num_test_elements))).map(map_to_result, remove_columns=dataset_test.select(list(range(data_args.num_test_elements))).column_names)
+    if data_args.num_test_elements is not None:
+        dataset_test = dataset_test.select(list(range(data_args.num_test_elements)))
         print(f"Computing test results for {data_args.num_test_elements} elements")
+    else:
+        print(f"Computing test results for full test data")
+    results = dataset_test.map(map_to_result, remove_columns=dataset_test.column_names, batched=True, batch_size=model_args.batch_size)    
 
     print("\n\n======== Test Results==========\n")
     
