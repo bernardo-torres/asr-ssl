@@ -1,5 +1,6 @@
 import torch
-from transformers import Wav2Vec2ForCTC, Wav2Vec2ProcessorWithLM
+from transformers import (Wav2Vec2ForCTC, HubertForCTC, 
+                          WavLMForCTC, Wav2Vec2ProcessorWithLM)
 import numpy as np
 from datasets import load_dataset, load_metric
 import random
@@ -38,6 +39,9 @@ class ModelArguments:
 
     model_name_or_path: str = field(
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
+    )
+    model_type: str = field(
+        metadata={"help": "Type of the model, i.e. wav2vec, wavlm or hubert."}
     )
     
     language: str = field(
@@ -109,7 +113,15 @@ def main():
     language = model_args.language#'hu' # model argument
     phoneme_language = model_args.phoneme_language
     processor = Wav2Vec2Processor.from_pretrained(path, bos_token=None, eos_token=None)
-    model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
+
+    if model_args.model_type == "wav2vec":
+        model =  Wav2Vec2ForCTC.from_pretrained(path).to(device)
+    elif model_args.model_type == "wavlm":
+        model = WavLMForCTC.from_pretrained(path).to(device)
+    elif model_args.model_type == "hubert":
+        model = HubertForCTC.from_pretrained(path).to(device)
+    else:
+        raise ValueError(f"Unrecognized model type {model_args.model_type}")
     model.eval()
     model.to(device)
 
