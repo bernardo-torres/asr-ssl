@@ -186,15 +186,19 @@ def main():
     cache_dir = model_args.cache_dir
     
     ds_test = load_dataset(script_dir, language, split='test', data_dir=data_dir, cache_dir=cache_dir,  download_mode='force_redownload') # __data argument__
-    
     ds_test = ds_test.remove_columns([columns for columns in ds_test.column_names if not ['path', 'audio', 'sentence']])
+    if data_args.num_test_elements is not None:
+        ds_test = ds_test.select(list(range(data_args.num_test_elements)))
+        print(f"Computing test results for {data_args.num_test_elements} elements")
+    else:
+        print(f"Computing test results for full test data")
   
     if phoneme_language is None:
         print(f'Processing data in ASR mode (not phoneme), language {language}')
     else:
         print(f'Processing data in phoneme mode, configuration {phoneme_language}')
-    print('Processing test data done')
-    dataset_test, _, _, _ = preprocess(ds_test, 
+
+    ds_test, _, _, _ = preprocess(ds_test, 
                                         language, 
                                         custom_vocab=None, 
                                         processor=processor, 
@@ -204,13 +208,8 @@ def main():
                                         verbose=True)
     print('Processing test data done')
     
-    
-    if data_args.num_test_elements is not None:
-        dataset_test = dataset_test.select(list(range(data_args.num_test_elements)))
-        print(f"Computing test results for {data_args.num_test_elements} elements")
-    else:
-        print(f"Computing test results for full test data")
-    results = dataset_test.map(map_to_result, remove_columns=dataset_test.column_names, batched=True, batch_size=model_args.batch_size)    
+    results = ds_test.map(map_to_result, remove_columns=ds_test.column_names, batched=True, batch_size=model_args.batch_size)    
+    results = results.filter(lambda row: len(row['text']) > 0)
 
     print("\n\n======== Test Results==========\n")
     
