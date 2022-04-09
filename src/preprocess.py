@@ -91,6 +91,8 @@ def preprocess(dataset,
                 phoneme_language=None, 
                 phoneme_backend='espeak',
                 chars_to_ignore_regex=None,
+                batch_size=100, 
+                num_proc=1,
                 load_from_cache=True, 
                 verbose=True):
 
@@ -225,14 +227,21 @@ def preprocess(dataset,
     def prepare_phonetize(batch):
         with processor.as_target_processor():
             print(batch['sentence'][0])
-            batch["labels"] = processor(phone(batch["sentence"])).input_ids
+            labels = processor(phone(batch["sentence"])).input_ids
+            if len(labels) < len(batch['sentence']):
+              batch["labels"] = batch["sentence"]
+              batch["labels"][:len(labels)] = labels
+              batch["labels"][len(labels):] = batch["labels"][:(len(batch['sentence']) - len(labels))]
+            else:
+              batch["labels"] = labels
         return batch
 
     if phoneme_language is None:
-        dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=1)
+        dataset = dataset.map(prepare_dataset, remove_columns=dataset.column_names, num_proc=num_proc)
     else:
-        dataset = dataset.map(prepare_input_values, remove_columns=dataset.column_names[:-1], num_proc=1)
-        dataset = dataset.map(prepare_phonetize, remove_columns=dataset.column_names[:-1], num_proc=1, batched=True, batch_size = 100)
+        dataset = dataset.map(prepare_input_values, remove_columns=dataset.column_names[:-1], num_proc=num_proc)
+        dataset = dataset.filter(lambda row: len(row['sentence']) > 0)
+        dataset = dataset.map(prepare_phonetize, remove_columns=dataset.column_names[:-1], num_proc=num_proc, batched=True, batch_size = batch_size)
 
 
     if filter_length is not None:
